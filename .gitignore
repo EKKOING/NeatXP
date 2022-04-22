@@ -1,0 +1,12 @@
+old/
+exampleBots/
+library/
+maps/
+scripts/
+source/
+__pycache__/
+EKKO.egg-info/
+build/
+binaries/
+archives/
+.vscode/
