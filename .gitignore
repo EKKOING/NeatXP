@@ -10,3 +10,4 @@ build/
 binaries/
 archives/
 .vscode/
+creds.json
