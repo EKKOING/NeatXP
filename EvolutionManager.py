@@ -1,5 +1,4 @@
-from statistics import variance
-from shellbot4 import ShellBot
+from shellbot import ShellBot
 import json
 import pickle
 import pprint as pp
