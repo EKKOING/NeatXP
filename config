@@ -1,0 +1,30 @@
+[NEAT]
+pop_size                = 9
+no_fitness_termination  = True
+reset_on_extinction     = 0
+
+[DefaultGenome]
+num_inputs              = 8
+num_hidden              = 0
+num_outputs             = 4
+initial_connection      = partial 0.5
+feed_forward            = True
+
+weight_max_value        = 30
+weight_min_value        = -30
+weight_init_mean        = 0.0
+weight_init_stdev       = 1.0
+weight_mutate_rate      = 0.8
+weight_replace_rate     = 0.02
+weight_mutate_power     = 0.4
+enabled_default         = True
+enabled_mutate_rate     = 0.01
+
+[DefaultStagnation]
+species_fitness_func = mean
+max_stagnation       = 15
+species_elitism      = 4
+
+[DefaultReproduction]
+elitism            = 2
+survival_threshold = 0.2
