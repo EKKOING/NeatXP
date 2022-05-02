@@ -236,6 +236,8 @@ class ShellBot(threading.Thread):
                 self.died_but_no_reset = True
             self.frame = 0
             ai.thrust(1)
+        if self.frame % 56 == 0:
+            ai.thrust(1)
         self.last_alive = self.alive
 
     def production_system(self,) -> None:
