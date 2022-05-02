@@ -7,12 +7,13 @@ Date: 20220426
 import math
 import pickle
 import threading
+from random import randint, random
 from typing import List, Tuple, Union
-from neat import nn
 
 import libpyAI as ai
 import numpy as np
 from neat import nn
+
 
 class ShellBot(threading.Thread):
 
@@ -22,6 +23,7 @@ class ShellBot(threading.Thread):
 
     ## Neat Info
     nn = None
+    exploration_rate = 0.02
     
     ## Configuration Settings
     max_speed: int = 10
@@ -195,10 +197,15 @@ class ShellBot(threading.Thread):
     def set_action(self,) -> None:
         ## Get the observations
         observations = self.get_observations()
+
         ## Forward Propogation
         inputs = np.array(observations)
         outputs = self.nn.activate(inputs)
         action = np.argmax(outputs)
+
+        ## Exploration
+        if self.exploration_rate > random.random():
+            action = random.randint(0, 7)
         ## Set the action
         self.current_action = int(action)
     
