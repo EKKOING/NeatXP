@@ -183,7 +183,7 @@ class EvolveManager:
             if (datetime.now() - started_at) > timedelta(minutes=5):
                 delete_last_lines(5)
                 print(
-                    f'Genome {key} has been running for 5 minutes, marking for review!\n\n\n\n\n\n')
+                    f'Genome {key} has been running for 5 minutes, marking for review!\n\n\n\n\n\n\n')
                 collection.update_one({'_id': genome_id}, {
                                       '$set': {'started_eval': False}})
                 wandb.alert(
@@ -194,7 +194,7 @@ class EvolveManager:
             genome_id = genome['_id']
             key = genome['key']
             delete_last_lines(5)
-            print(f'Genome {key} has failed to evaluate, marking for review!\n\n\n\n\n\n')
+            print(f'Genome {key} has failed to evaluate, marking for review!\n\n\n\n\n\n\n')
             collection.update_one({'_id': genome_id}, {
                                   '$set': {'started_eval': False, 'finished_eval': False}})
             wandb.alert(
