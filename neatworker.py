@@ -7,6 +7,8 @@ import pickle
 from datetime import datetime, timedelta
 from neat import nn
 
+eval_length = 60 
+
 try:
     with open('creds.json') as f:
         creds = json.load(f)
@@ -27,6 +29,7 @@ for idx in range(0, 10):
     print(f'Grant Operator Perms in Next {10 - idx} Seconds!!!')
     sleep(1)
 
+waiting = False
 while True:
     if collection.count_documents({'started_eval': False}) != 0:
         genome = collection.find_one({'started_eval': False})
@@ -34,7 +37,7 @@ while True:
         net: nn.FeedForwardNetwork = pickle.loads(genome['genome'])
         generation = genome['generation']
         individual_num = genome['individual_num']
-        sb.nn == net
+        sb.nn = net
         sb.reset()
         print(f'Generation {generation} number {individual_num} started evaluation!')
         sleep(60)
@@ -42,8 +45,11 @@ while True:
         collection.update_one({'_id': genome['_id']}, {'$set': {'fitness': fitness, 'finished_eval': True}})
         print(f'Generation {generation} number {individual_num} finished evaluation! Fitness: {fitness}')
         print("==================")
+        waiting = False
     else:
-        print('Waiting For Genomes...')
-        sleep(30)
+        if not waiting:
+            print('Waiting For Work Assignment!')
+            waiting = True
+        sleep(10)
     sleep(1)
 
