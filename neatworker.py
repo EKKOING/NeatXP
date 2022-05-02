@@ -7,7 +7,7 @@ import pickle
 from datetime import datetime, timedelta
 from neat import nn
 
-eval_length = 60 
+eval_length = 60
 
 try:
     with open('creds.json') as f:
@@ -24,7 +24,7 @@ collection = db.genomes
 print('Starting Bot!')
 sb = ShellBot()
 sb.start()
-## Give Us Enough Time to Type Password In
+# Give Us Enough Time to Type Password In
 for idx in range(0, 10):
     print(f'Grant Operator Perms in Next {10 - idx} Seconds!!!')
     sleep(1)
@@ -33,17 +33,21 @@ waiting = False
 while True:
     if collection.count_documents({'started_eval': False}) != 0:
         genome = collection.find_one({'started_eval': False})
-        collection.update_one({'_id': genome['_id']}, {'$set': {'started_eval': True, 'started_at': datetime.now()}})
+        collection.update_one({'_id': genome['_id']}, {
+                              '$set': {'started_eval': True, 'started_at': datetime.now()}})
         net: nn.FeedForwardNetwork = pickle.loads(genome['genome'])
         generation = genome['generation']
         individual_num = genome['individual_num']
         sb.nn = net
         sb.reset()
-        print(f'Generation {generation} number {individual_num} started evaluation!')
+        print(
+            f'Generation {generation} number {individual_num} started evaluation!')
         sleep(60)
         fitness = sb.score
-        collection.update_one({'_id': genome['_id']}, {'$set': {'fitness': fitness, 'finished_eval': True}})
-        print(f'Generation {generation} number {individual_num} finished evaluation! Fitness: {fitness}')
+        collection.update_one({'_id': genome['_id']}, {
+                              '$set': {'fitness': fitness, 'finished_eval': True}})
+        print(
+            f'Generation {generation} number {individual_num} finished evaluation! Fitness: {fitness}')
         print("==================")
         waiting = False
     else:
@@ -52,4 +56,3 @@ while True:
             waiting = True
         sleep(10)
     sleep(1)
-
