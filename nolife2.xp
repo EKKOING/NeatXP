@@ -1,0 +1,295 @@
+# Created by ./xp-mapedit on Wed Apr 27 16:29:28 2022
+
+mapwidth : 32
+mapheight : 32
+mapname : nolife2
+limitedlives : yes
+worldlives : 0
+selfimmunity : no
+gravity : 0.0
+gravityangle : 90
+gravitypoint : 0,0
+gravitypointsource : no
+gravityclockwise : no
+gravityanticlockwise : no
+shotsgravity : no
+gravityvisible : no
+coriolis : 0
+friction : 0.0
+blockfriction : 0.0
+defaultshipshape : (NM:Default)(AU:Unknown)(SH: 15,0 -9,8 -9,-8)(MG: 15,0)(LG: 15,0)(RG: 15,0)(EN: -9,0)(LR: -9,8)(RR: -9,-8)(LL: -9,8)(RL: -9,-8)(MR: 15,0)
+tankshipshape : (NM:fueltank)(AU:John E. Norlin)(SH: 15,0 14,-5 9,-8 -5,-8 -3,-8 -3,0 2,0 2,2 -3,2 -3,6 5,6 5,8 -5,8 -5,-8 -9,-8 -14,-5 -15,0 -14,5 -9,8 9,8 14,5)(EN: -15,0)(MG: 15,0)
+shipmass : 20.0
+shotmass : 0.8
+shotspeed : 21.0
+shotlife : 60
+maxplayershots : 20
+firerepeatrate : 13
+keepshots : no
+edgebounce : no
+edgewrap : no
+extraborder : no
+turnthrust : no
+robotstalk : no
+robotsleave : no
+robotleavelife : 50
+robotleavescore : -90
+robotleaveratio : -5
+robotteam : 0
+restrictrobots : yes
+reserverobotteam : yes
+minrobots : 0
+maxrobots : 0
+robotrealname : robot
+robothostname : xpilot.org
+shotswallbounce : no
+ballswallbounce : yes
+mineswallbounce : no
+itemswallbounce : no
+missileswallbounce : no
+sparkswallbounce : no
+debriswallbounce : no
+asteroidswallbounce : no
+wreckagecollisionmaykill : no
+tankrealname : tank
+tankhostname : tanks.org
+maxobjectwallbouncespeed : 40
+maxshieldedwallbouncespeed : 50
+maxunshieldedwallbouncespeed : 5
+maxshieldedplayerwallbounceangle : 90
+maxunshieldedplayerwallbounceangle : 30
+playerwallbouncebrakefactor : 0.89
+objectwallbouncebrakefactor : 0.95
+objectwallbouncelifefactor : 0.80
+wallbouncefueldrainmult : 1.0
+wallbouncedestroyitemprob : 0.0
+loseitemdestroys : no
+limitedvisibility : no
+minvisibilitydistance : 0.0
+maxvisibilitydistance : 0.0
+wormholevisible : yes
+itemconcentratorvisible : yes
+blockfrictionvisible : yes
+wormtime : 0
+playerstartsshielded : no
+shieldeditempickup : no
+shieldedmining : no
+allowalliances : yes
+announcealliances : no
+targetkillteam : no
+targetteamcollision : yes
+targetsync : no
+targetdeadtime : 60
+treasurekillteam : no
+treasurecollisiondestroys : yes
+treasurecollisionmaykill : yes
+ballconnectorlength : 120
+maxballconnectorratio : 0.30
+ballconnectordamping : 2.0
+ballconnectorspringconstant : 1500.0
+connectorisstring : no
+ballcollisions : no
+ballsparkcollisions : no
+ballmass : 50.0
+playersonradar : yes
+missilesonradar : no
+minesonradar : no
+nukesonradar : no
+treasuresonradar : no
+teamplay : no
+teamassign : no
+teamimmunity : no
+teamcannons : no
+teamfuel : no
+capturetheflag : no
+cloakedexhaust : yes
+cloakedshield : yes
+cannonsuseitems : no
+cannonsdefend : no
+cannonsmartness : 1
+cannondeadtime : 72
+cannonflak : no
+identifymines : yes
+maxminesperpack : 2
+minelife : 1
+minefusetime : 00
+baseminerange : 0
+mineshotdetonatedistance : 0
+roguemineprob : 1.0
+nukeminmines : 4
+minminespeed : 0
+nukeclusterdamage : 1.0
+ecmsreprogramrobots : no
+ecmsreprogrammines : no
+distinguishmissiles : yes
+maxmissilesperpack : 4
+missilelife : 1
+rogueheatprob : 1.0
+nukeminsmarts : 7
+asteroidcollisionmaykill : yes
+asteroidsonradar : no
+maxasteroiddensity : 0
+asteroidconcentratorvisible : no
+asteroidconcentratorradius : 10
+asteroidmaxitems : 0
+allowshipshapes : yes
+allowsmartmissiles : yes
+allowheatseekers : yes
+allowtorpedoes : yes
+allowplayercrashes : yes
+allowplayerbounces : yes
+allowplayerkilling : yes
+allowshields : no
+allownukes : no
+allowclusters : no
+allowmodifiers : no
+allowlasermodifiers : no
+laserisstungun : no
+maxroundtime : 0
+gameduration : 0.0
+rounddelay : 0
+roundstoplay : 0
+reset : yes
+resetonhuman : 0
+maxpausetime : 3600
+timing : no
+checkpointradius : 6.0
+racelaps : 3
+ballrace : no
+ballraceconnected : no
+itemconcentratorradius : 10
+usewreckage : yes
+lockotherteam : yes
+allowviewing : no
+framespersecond : 14
+initialfuel : 1000
+initialtanks : 0
+initialecms : 0
+initialmines : 0
+initialmissiles : 0
+initialcloaks : 0
+initialsensors : 0
+initialwideangles : 0
+initialrearshots : 0
+initialafterburners : 0
+initialtransporters : 0
+initialdeflectors : 0
+initialphasings : 0
+initialhyperjumps : 0
+initialemergencythrusts : 0
+initiallasers : 0
+initialtractorbeams : 0
+initialautopilots : 0
+initialemergencyshields : 0
+initialmirrors : 0
+initialarmor : 0
+maxfuel : 10000
+maxtanks : 0
+maxecms : 0
+maxmines : 0
+maxmissiles : 0
+maxcloaks : 0
+maxsensors : 0
+maxwideangles : 0
+maxrearshots : 0
+maxafterburners : 0
+maxtransporters : 0
+maxdeflectors : 0
+maxphasings : 0
+maxhyperjumps : 0
+maxemergencythrusts : 0
+maxlasers : 0
+maxtractorbeams : 0
+maxautopilots : 0
+maxemergencyshields : 0
+maxmirrors : 0
+maxarmor : 0
+maxoffensiveitems : 0
+maxdefensiveitems : 0
+maxitemdensity : 0.00012
+itemenergypackprob : 0
+itemtankprob : 0
+itemecmprob : 0
+itemmineprob : 0
+itemmissileprob : 0
+itemcloakprob : 0
+itemsensorprob : 0
+itemwideangleprob : 0
+itemrearshotprob : 0
+itemafterburnerprob : 0
+itemtransporterprob : 0
+itemlaserprob : 0
+itememergencythrustprob : 0
+itemtractorbeamprob : 0
+itemautopilotprob : 0
+itememergencyshieldprob : 0
+itemdeflectorprob : 0
+itemhyperjumpprob : 0
+itemphasingprob : 0
+itemmirrorprob : 0
+itemarmorprob : 0
+movingitemprob : 0.0
+dropitemonkillprob : 0.0
+detonateitemonkillprob : 0.0
+destroyitemincollisionprob : 0.0
+itemconcentratorprob : 0.0
+itemprobmult : 0
+cannonitemprobmult : 0
+randomitemprob : 0.0
+asteroidprob : 0
+asteroidconcentratorprob : 0
+asteroiditemprob : 0.0
+shotkillscoremult : 1.0
+torpedokillscoremult : 1.0
+smartkillscoremult : 1.0
+heatkillscoremult : 1.0
+clusterkillscoremult : 1.0
+laserkillscoremult : 1.0
+tankkillscoremult : 0.44
+runoverkillscoremult : 0.33
+ballkillscoremult : 1.0
+explosionkillscoremult : 0.33
+shovekillscoremult : 0.5
+crashscoremult : 0.33
+minescoremult : 0.17
+tankscoredecrement : 500
+asteroidpoints : 1.0
+asteroidmaxscore : 100.0
+cannonpoints : 1.0
+cannonmaxscore : 100.0
+teamsharescore : no
+
+mapData: \multiline: EndOfMapdata
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+x     x                  x     x
+x     x                  x     x
+x     x                  x     x
+x                              x
+x324                        123x
+xxxx                        xxxx
+x                              x
+x                              x
+x                              x
+x                              x
+x            2    3            x
+x            x    x            x
+x            x    x            x
+x        3  1x1234x4  2        x
+x        xxxxxxxxxxxxxx        x
+x        xs    xx    ax        x
+x        s     xx     a        x
+x              xx              x
+x              as              x
+x                              x
+x                              x
+x1                            4x
+xxxs                        axxx
+x                              x
+x                              x
+x                              x
+x                              x
+x                              x
+x                              x
+x  14     _    14          41  x
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+EndOfMapdata
