@@ -6,6 +6,7 @@ from bson.binary import Binary
 import pickle
 from datetime import datetime, timedelta
 from neat import nn
+from random import randint
 
 eval_length = 60
 
@@ -54,5 +55,6 @@ while True:
         if not waiting:
             print('Waiting For Work Assignment!')
             waiting = True
-        sleep(10)
+        ## Try to desync workers
+        sleep(randint(5, 15))
     sleep(1)
