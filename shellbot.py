@@ -204,8 +204,8 @@ class ShellBot(threading.Thread):
         action = np.argmax(outputs)
 
         ## Exploration
-        if self.exploration_rate > random.random():
-            action = random.randint(0, 7)
+        if self.exploration_rate > random():
+            action = randint(0, 7)
         ## Set the action
         self.current_action = int(action)
     
@@ -242,8 +242,6 @@ class ShellBot(threading.Thread):
             if self.alive == 0.0:
                 self.died_but_no_reset = True
             self.frame = 0
-            ai.thrust(1)
-        if self.frame % 56 == 0:
             ai.thrust(1)
         self.last_alive = self.alive
 
