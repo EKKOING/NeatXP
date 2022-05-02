@@ -8,16 +8,20 @@ import math
 import pickle
 import threading
 from typing import List, Tuple, Union
+from neat import nn
 
 import libpyAI as ai
 import numpy as np
-import neat
+from neat import nn
 
 class ShellBot(threading.Thread):
 
     ## Initialization Settings
     username: str = "Kerbal"
     headless: bool = False
+
+    ## Neat Info
+    nn = None
     
     ## Configuration Settings
     max_speed: int = 10
@@ -107,29 +111,11 @@ class ShellBot(threading.Thread):
     ##save_every: int = 140
     oberservations = []
     actions = []
-    filename = './ga6/800_0.pickle'
 
     def __init__(self, username:str="InitNoName") -> None:
         super(ShellBot, self).__init__()
         self.username = username
         self.max_turntime = math.ceil(180 / self.turnspeed)
-        self.weights = []
-        self.biases = []
-        with open(self.filename, 'rb') as f:
-            wandb = pickle.load(f)
-            self.weights = wandb['weights']
-            self.biases = wandb['biases']
-    
-    def load_pickle(self, filename: str = '') -> None:
-        if filename == '':
-            filename = self.filename
-            print("Loading from default file: " + filename)
-        else:
-            print("Loading network from file: " + filename)
-        with open(filename, 'rb') as f:
-            wandb = pickle.load(f)
-            self.weights = wandb['weights']
-            self.biases = wandb['biases']
 
     def get_score(self,) -> float:
         return (self.score + 100) ** 1.1
@@ -153,9 +139,9 @@ class ShellBot(threading.Thread):
         wall_track = 1.0 - (float(self.track_wall) / float(self.scan_distance))
         closest_wall = 1.0 - (float(self.closest_wall) / float(self.scan_distance))
         wall_front = 1.0 - (float(self.wall_front) / float(self.scan_distance))
-        wall_back = 1.0 - (float(self.wall_back) / float(self.scan_distance))
         wall_left = 1.0 - (float(self.wall_left) / float(self.scan_distance))
         wall_right = 1.0 - (float(self.wall_right) / float(self.scan_distance))
+        wall_back = 1.0 - (float(self.wall_back) / float(self.scan_distance))
 
         ship_x_vel = self.x_vel / 20.0
         ship_y_vel = self.y_vel / 20.0
@@ -165,6 +151,7 @@ class ShellBot(threading.Thread):
         enemy_y_vel = self.enemy_y_vel / 20.0
         enemy_delta_x = 1.0 - (self.enemy_delta_x / 1500.0)
         enemy_delta_y = 1.0 - (self.enemy_delta_y / 1500.0)
+        enemy_dist = 1.0 - (self.get_distance(self.enemy_delta_x, self.enemy_delta_y, 0, 0) / 700.0)
 
         enemy_cpa_dist = 1.0 - (self.enemy_cpa_dist / 1500.0)
         enemy_cpa_time = 1.0 - (self.enemy_cpa_time / 140.0)
@@ -174,12 +161,18 @@ class ShellBot(threading.Thread):
         shot_delta_x = 1.0 - (self.shot_delta_x / 1500.0)
         shot_delta_y = 1.0 - (self.shot_delta_y / 1500.0)
         lowest_alert = 1.0 - (self.lowest_alert / 500.0)
+        shot_dist = 1.0 - (self.get_distance(self.shot_delta_x, self.shot_delta_y, self.x, self.y) / 700.0)
+
+        delta_angle_aim = self.angle_diff(self.heading, self.desired_heading) / 180.0
+
 
         tt_tracking = 1.0 - (self.tt_tracking / 140.0)
         tt_retro_point = 1.0 - (self.tt_retro_point / 70.0)
 
+        last_action = float(self.last_action_performed) / 8.0
+
         ## Organize the values
-        oberservations = [ship_speed, ship_x_vel, ship_y_vel, wall_track, closest_wall, wall_front, wall_back, wall_left, wall_right, self.enemy_on_screen, self.valid_aim, self.shot_on_screen, lowest_alert, tt_tracking, tt_retro_point]
+        oberservations = [ship_speed, wall_track, closest_wall, wall_front, wall_back, wall_left, wall_right, enemy_dist, self.enemy_speed, self.enemy_on_screen, self.valid_aim, delta_angle_aim, self.shot_on_screen, shot_dist, lowest_alert, tt_tracking, tt_retro_point, ]
 
         ## Check Normalization
         for idx in range(0, len(oberservations)):
@@ -204,8 +197,7 @@ class ShellBot(threading.Thread):
         observations = self.get_observations()
         ## Forward Propogation
         inputs = np.array(observations)
-        outputs = self.forward_propogation(inputs, self.weights, self.biases)
-        ## Get the action
+        outputs = self.nn.activate(inputs)
         action = np.argmax(outputs)
         ## Set the action
         self.current_action = int(action)
@@ -232,8 +224,11 @@ class ShellBot(threading.Thread):
             self.set_action()
             self.perform_action()
             self.production_system()
+        except AttributeError:
+            pass
         except Exception as e:
             print("Error: " + str(e))
+            pass
 
         self.frame += 1
         if self.last_alive != self.alive:
@@ -323,6 +318,8 @@ class ShellBot(threading.Thread):
         self.wall_back = float(ai.wallFeeler(self.scan_distance, int(self.angle_add(self.heading, 180))))
         self.wall_left = float(ai.wallFeeler(self.scan_distance, int(self.angle_add(self.heading, 90))))
         self.wall_right = float(ai.wallFeeler(self.scan_distance, int(self.angle_add(self.heading, -90))))
+        self.wall_45_left = float(ai.wallFeeler(self.scan_distance, int(self.angle_add(self.heading, 45))))
+        self.wall_45_right = float(ai.wallFeeler(self.scan_distance, int(self.angle_add(self.heading, -45))))
 
         ## Timings
         self.tt_tracking = math.ceil(float(self.track_wall) / (self.speed + 0.0000001))
@@ -355,10 +352,10 @@ class ShellBot(threading.Thread):
             self.enemy_x_vel = (enemy_radar_x - self.last_enemy_radar_x) * 4.37
             self.enemy_y_vel = (enemy_radar_y - self.last_enemy_radar_y) * 4.37
 
-            enemy_speed = pow(pow(self.enemy_x_vel, 2) + pow(self.enemy_y_vel, 2), 0.5) * 4.37
+            self.enemy_speed = pow(pow(self.enemy_x_vel, 2) + pow(self.enemy_y_vel, 2), 0.5) * 4.37
             enemy_heading = self.get_angle_from_to(self.last_enemy_radar_x, self.last_enemy_radar_y, enemy_radar_x, enemy_radar_y)
 
-            self.enemy_cpa_time, self.enemy_cpa_dist, self.enemy_cpa_x, self.enemy_cpa_y = self.get_cpa_self(enemy_radar_x * 4.37, enemy_radar_y * 4.37, enemy_heading, enemy_speed)
+            self.enemy_cpa_time, self.enemy_cpa_dist, self.enemy_cpa_x, self.enemy_cpa_y = self.get_cpa_self(enemy_radar_x * 4.37, enemy_radar_y * 4.37, enemy_heading, self.enemy_speed)
 
         else:
             self.enemy_on_screen = 1.0
@@ -415,6 +412,14 @@ class ShellBot(threading.Thread):
             self.kill()
         elif self.current_action == 4:
             self.check_position()
+        elif self.current_action == 5:
+            self.thrust = True
+        elif self.current_action == 6:
+            self.desired_heading = self.angle_add(self.heading, 15.0)
+            self.turn = True
+        elif self.current_action == 7:
+            self.desired_heading = self.angle_add(self.heading, -15.0)
+            self.turn = True
         self.check_luck()
 
     ## Action Functions
@@ -866,6 +871,13 @@ class ShellBot(threading.Thread):
         if abs(diff) < abs(comp_diff):
             return diff
         return comp_diff
+    
+    def get_tt_feeler(self, angle: float, distance: float, x_vel: float, y_vel: float) -> float:
+        x_dist, y_dist = self.get_components(angle, distance)
+        tt_x = x_dist / (x_vel + 0.0000001)
+        tt_y = y_dist / (y_vel + 0.0000001)
+        tt_feel = min(tt_x, tt_y)
+        return tt_feel
 
 if __name__ == "__main__":
     test = ShellBot('Test')
