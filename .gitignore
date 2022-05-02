@@ -11,3 +11,4 @@ binaries/
 archives/
 .vscode/
 creds.json
+wandb/
