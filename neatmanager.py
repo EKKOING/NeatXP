@@ -3,7 +3,7 @@ import os
 import pickle
 import sys
 from datetime import datetime, timedelta
-from math import floor
+from math import ceil, floor
 from time import sleep
 
 import neat
@@ -34,8 +34,8 @@ def progress_bar(progress: float, in_progress: float, total: float) -> None:
     left = '['
     right = ']'
     bar_length = 30
-    fill = '>'
-    in_progress_fill = '*'
+    fill = '|'
+    in_progress_fill = '>'
     percent = progress / total
     in_percent = in_progress / total
     fill_amt = int(round(percent * bar_length))
@@ -123,6 +123,8 @@ class EvolveManager:
         first_sleep = True
         secs_passed = 0
         no_alert = True
+        secs_since_tg_update = 0
+        last_secs_tg = 0
         while True:
             uncompleted_training = collection.count_documents({'generation': self.generation,
                                                                'finished_eval': False})
@@ -145,7 +147,12 @@ class EvolveManager:
                 first_sleep = False
             print(f'=== {datetime.now().strftime("%H:%M:%S")} ===\n{uncompleted_training} genomes still need to be evaluated\n{started_training} currently being evaluated\n{finished_training} have been evaluated')
             progress_bar(finished_training, started_training, len(genomes))
-            secs_tg = (uncompleted_training * 60 / (self.num_workers + 1)) + 60
+            secs_tg = (ceil(uncompleted_training * 60 / (self.num_workers + 1)))
+            if secs_tg != last_secs_tg:
+                secs_since_tg_update = 0
+            last_secs_tg = secs_tg
+            secs_tg -= secs_since_tg_update
+            secs_since_tg_update += 1
             mins_tg = floor(secs_tg / 60)
             secs_tg = round(secs_tg % 60)
             if secs_tg < 10:
@@ -194,13 +201,9 @@ class EvolveManager:
             genome_id = genome['_id']
             key = genome['key']
             delete_last_lines(5)
-            print(f'Genome {key} has failed to evaluate, marking for review!\n\n\n\n\n\n\n')
+            print(f'Genome {key} did nothing!\n\n\n\n\n\n\n')
             collection.update_one({'_id': genome_id}, {
-                                  '$set': {'started_eval': False, 'finished_eval': False}})
-            wandb.alert(
-                title="Evaluation Inconclusive",
-                text=f"Genome {key} has failed to evaluate, marking for review",
-            )
+                                  '$set': {'fitness': -10}})
 
 
 manager = EvolveManager(config_path, latest=None, generation=0)
