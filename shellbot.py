@@ -24,6 +24,7 @@ class ShellBot(threading.Thread):
     ## Neat Info
     nn = None
     exploration_rate = 0.02
+    cum_bonus = 0.0
     
     ## Configuration Settings
     max_speed: int = 10
@@ -144,6 +145,8 @@ class ShellBot(threading.Thread):
         wall_left = 1.0 - (float(self.wall_left) / float(self.scan_distance))
         wall_right = 1.0 - (float(self.wall_right) / float(self.scan_distance))
         wall_back = 1.0 - (float(self.wall_back) / float(self.scan_distance))
+        wall_30_right = 1.0 - (float(self.wall_30_right) / float(self.scan_distance))
+        wall_30_left = 1.0 - (float(self.wall_30_left) / float(self.scan_distance))
 
         ship_x_vel = self.x_vel / 20.0
         ship_y_vel = self.y_vel / 20.0
@@ -154,6 +157,8 @@ class ShellBot(threading.Thread):
         enemy_delta_x = 1.0 - (self.enemy_delta_x / 1500.0)
         enemy_delta_y = 1.0 - (self.enemy_delta_y / 1500.0)
         enemy_dist = 1.0 - (self.get_distance(self.enemy_delta_x, self.enemy_delta_y, 0, 0) / 700.0)
+        angle_delta_enemy = self.angle_diff(self.heading, self.get_angle_from_to(0, 0, enemy_delta_x, enemy_delta_y)) / 180.0
+        enemy_speed = self.enemy_speed / 20.0
 
         enemy_cpa_dist = 1.0 - (self.enemy_cpa_dist / 1500.0)
         enemy_cpa_time = 1.0 - (self.enemy_cpa_time / 140.0)
@@ -164,6 +169,7 @@ class ShellBot(threading.Thread):
         shot_delta_y = 1.0 - (self.shot_delta_y / 1500.0)
         lowest_alert = 1.0 - (self.lowest_alert / 500.0)
         shot_dist = 1.0 - (self.get_distance(self.shot_delta_x, self.shot_delta_y, self.x, self.y) / 700.0)
+        angle_delta_shot = self.angle_diff(self.heading, self.get_angle_from_to(0, 0, shot_delta_x, shot_delta_y)) / 180.0
 
         delta_angle_aim = self.angle_diff(self.heading, self.desired_heading) / 180.0
 
@@ -174,7 +180,7 @@ class ShellBot(threading.Thread):
         last_action = float(self.last_action_performed) / 8.0
 
         ## Organize the values
-        oberservations = [ship_speed, wall_track, closest_wall, wall_front, wall_back, wall_left, wall_right, enemy_dist, self.enemy_speed, self.enemy_on_screen, self.valid_aim, delta_angle_aim, self.shot_on_screen, shot_dist, lowest_alert, tt_tracking, tt_retro_point, ]
+        oberservations = [ship_speed, wall_track, closest_wall, wall_front, wall_left, wall_right, wall_30_right, wall_30_left, enemy_dist, enemy_speed, self.enemy_on_screen, angle_delta_enemy, enemy_cpa_dist, self.valid_aim, delta_angle_aim, self.shot_on_screen, shot_dist, angle_delta_shot, lowest_alert, tt_tracking, tt_retro_point, last_action]
 
         ## Check Normalization
         for idx in range(0, len(oberservations)):
@@ -201,13 +207,35 @@ class ShellBot(threading.Thread):
         ## Forward Propogation
         inputs = np.array(observations)
         outputs = self.nn.activate(inputs)
-        action = np.argmax(outputs)
+
+        action = 8
+
+        ## Roulette Action Selection
+        if min(outputs) < 0:
+            outputs = outputs + abs(min(outputs))
+        outputs = outputs / sum(outputs) 
+        threshold = random()
+        running_total = 0
+        for idx, prob in enumerate(outputs):
+            running_total += prob
+            if  threshold < running_total:
+                action = idx
+                break
 
         ## Exploration
         if self.exploration_rate > random():
             action = randint(0, 7)
+        
         ## Set the action
         self.current_action = int(action)
+    
+    def calculate_bonus(self,) -> None:
+        step_bonus = 0.0
+        if self.speed > 0.5 and self.alive == 1.0:
+            step_bonus += 0.03
+        if self.alive == 1.0:
+            step_bonus += 0.01
+        self.cum_bonus += step_bonus
     
     ## Running the bot
     def run_loop(self,) -> None:
@@ -219,10 +247,11 @@ class ShellBot(threading.Thread):
                 self.frame = 0
                 self.score = 0
                 self.enemy_score = 0
-                self.alive = False
+                self.alive = 0.0
                 self.last_alive = False
                 self.current_action = 5
                 self.died_but_no_reset = False
+                self.cum_bonus = 0.0
                 return
             ai.setTurnSpeedDeg(self.turnspeed)
             
@@ -298,7 +327,6 @@ class ShellBot(threading.Thread):
 
     def collect_info(self,) -> None:
         ## Basics
-        self.last_alive = self.alive
         self.alive = float(ai.selfAlive())
 
         self.last_score = self.score
@@ -325,8 +353,8 @@ class ShellBot(threading.Thread):
         self.wall_back = float(ai.wallFeeler(self.scan_distance, int(self.angle_add(self.heading, 180))))
         self.wall_left = float(ai.wallFeeler(self.scan_distance, int(self.angle_add(self.heading, 90))))
         self.wall_right = float(ai.wallFeeler(self.scan_distance, int(self.angle_add(self.heading, -90))))
-        self.wall_45_left = float(ai.wallFeeler(self.scan_distance, int(self.angle_add(self.heading, 45))))
-        self.wall_45_right = float(ai.wallFeeler(self.scan_distance, int(self.angle_add(self.heading, -45))))
+        self.wall_30_left = float(ai.wallFeeler(self.scan_distance, int(self.angle_add(self.heading, 30))))
+        self.wall_30_right = float(ai.wallFeeler(self.scan_distance, int(self.angle_add(self.heading, -30))))
 
         ## Timings
         self.tt_tracking = math.ceil(float(self.track_wall) / (self.speed + 0.0000001))
@@ -515,7 +543,7 @@ class ShellBot(threading.Thread):
                 self.turn = False
                 if self.frame % 133 == 0:
                     self.thrust = True
-            if self.check_heading_tolerance(5):
+            if self.check_heading_tolerance(10):
                 self.shoot = True
                 self.last_action_failed = -2.0
                 ##print(f'{self.username}: Shooting')
