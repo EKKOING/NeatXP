@@ -267,6 +267,8 @@ class ShellBot(threading.Thread):
         except Exception as e:
             print("Error: " + str(e))
             pass
+        
+        self.calculate_bonus()
 
         self.frame += 1
         if self.last_alive != self.alive:
