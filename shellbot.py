@@ -211,12 +211,14 @@ class ShellBot(threading.Thread):
         action = 8
 
         ## Roulette Action Selection
+        increase_by = 0.0
         if min(outputs) < 0:
-            outputs = outputs + abs(min(outputs))
-        outputs = outputs / sum(outputs) 
+            increase_by = abs(min(outputs))
+        divide_by = sum(outputs) + len(outputs)
+        modified_outouts = [(x + increase_by) / divide_by for x in outputs]
         threshold = random()
         running_total = 0
-        for idx, prob in enumerate(outputs):
+        for idx, prob in enumerate(modified_outouts):
             running_total += prob
             if  threshold < running_total:
                 action = idx
