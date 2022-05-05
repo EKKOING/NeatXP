@@ -54,7 +54,7 @@ while True:
             collection.update_one({'_id': genome['_id']}, {
                                 '$set': {'fitness': fitness, 'bonus': bonus, 'finished_eval': True}})
             print(
-                f'Generation {generation} number {individual_num} finished evaluation! Fitness: {fitness}')
+                f'Generation {generation} number {individual_num} finished evaluation! Fitness: {round(fitness + bonus, 2)} Score: {round(fitness, 2)} Bonus: {round(bonus, 2)}')
             print("==================")
             waiting = False
         else:
