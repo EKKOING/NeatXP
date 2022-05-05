@@ -27,7 +27,7 @@ sb.start()
 
 while True:
     try:
-        genome = collection.find({'started_eval': True, 'finished_eval': True}).sort([('fitness', pymongo.DESCENDING), ('bonus', pymongo.DESCENDING)])
+        genome = collection.find({'started_eval': True, 'finished_eval': True}).limit(15).sort([('fitness', pymongo.DESCENDING), ('bonus', pymongo.DESCENDING)])
         skip_amt = randint(0, 10)
         for _idx in range(0, skip_amt):
             genome.next()
