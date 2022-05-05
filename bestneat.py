@@ -27,7 +27,7 @@ sb.start()
 
 while True:
     try:
-        genome = collection.find_one({'started_eval': True, 'finished_eval': True}).sort([('fitness', pymongo.DESCENDING), ('bonus', pymongo.DESCENDING)])
+        genome = collection.find_one({'generation': 66, 'individual_num': 23})
 
         net: nn.FeedForwardNetwork = pickle.loads(genome['genome'])
         generation = genome['generation']
