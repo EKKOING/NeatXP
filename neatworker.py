@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 from neat import nn
 from random import randint
 
-eval_length = 60
+eval_length = 30
 
 try:
     with open('creds.json') as f:
@@ -47,6 +47,10 @@ while True:
             sleep(eval_length)
             fitness = sb.score
             bonus = sb.cum_bonus
+            sb.reset()
+            sleep(eval_length)
+            fitness += sb.score
+            bonus += sb.cum_bonus
             collection.update_one({'_id': genome['_id']}, {
                                 '$set': {'fitness': fitness, 'bonus': bonus, 'finished_eval': True}})
             print(
