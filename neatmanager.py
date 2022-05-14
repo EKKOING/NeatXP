@@ -73,6 +73,10 @@ class EvolveManager:
     num_workers = 0
     gen_start: datetime
 
+    fit_list = []
+    bonus_list = []
+    score_list = []
+
     def __init__(self, config_file: str, latest=None, generation: int = 0):
         self.config_file = config_file
         self.latest = latest
@@ -82,6 +86,7 @@ class EvolveManager:
                                   config_file)
         self.p = neat.Checkpointer.restore_checkpoint(
             latest) if latest else neat.Population(self.config)
+        self.p.config = self.config
         self.p.add_reporter(neat.StdOutReporter(False))
         self.checkpointer = neat.Checkpointer(1, filename_prefix='NEAT-')
         self.p.add_reporter(self.checkpointer)
@@ -102,6 +107,7 @@ class EvolveManager:
                 'individual_num': individual_num,
                 'generation': self.generation,
                 'fitness': 0,
+                'bonus': 0,
                 'started_eval': False,
                 'started_at': None,
                 'finished_eval': False,
@@ -113,7 +119,7 @@ class EvolveManager:
                         'individual_num': individual_num
                     }, {
                         '$set': {
-                            'started_eval': False, 'finished_eval': False, 'fitness': 0, 'genome': net, 'started_at': None, 'key': key
+                            'started_eval': False, 'finished_eval': False, 'fitness': 0, 'bonus': 0, 'genome': net, 'started_at': None, 'key': key
                         }
                     }
                 )
@@ -170,17 +176,22 @@ class EvolveManager:
                 )
                 no_alert = False
         fit_list = []
+        bonus_list = []
+        score_list = []
         for genome_id, genome in genomes:
             key = genome.key
-            results = collection.find_one({'key': key})
-            genome.fitness = results['fitness']
-            fit_list.append(results['fitness'])
+            results = collection.find_one({'key': key, 'generation': self.generation})
+            genome.fitness = results['fitness'] + results['bonus']
+            fit_list.append(results['fitness'] + results['bonus'])
+            bonus_list.append(results['bonus'])
+            score_list.append(results['fitness'])
+
+        self.score_list = score_list
         self.fit_list = fit_list
+        self.bonus_list = bonus_list
 
     def run(self, num_gens: int = 0):
         winner = self.p.run(self.eval_genomes, num_gens)
-
-        print(f'Best genome: {winner}')
 
     def check_eval_status(self, collection):
         for genome in collection.find({'generation': self.generation, 'started_eval': True, 'finished_eval': False}):
@@ -203,7 +214,7 @@ class EvolveManager:
             delete_last_lines(5)
             print(f'Genome {key} did nothing!\n\n\n\n\n\n\n')
             collection.update_one({'_id': genome_id}, {
-                                  '$set': {'fitness': -10}})
+                                  '$set': {'fitness': -20}})
 
 
 manager = EvolveManager(config_path, latest=None, generation=0)
@@ -216,12 +227,23 @@ while True:
             "Best Fitness": max(manager.fit_list),
             "Num Workers": manager.num_workers,
             "Range": max(manager.fit_list) - min(manager.fit_list),
-            "Min": min(manager.fit_list),
-            "Median": np.median(manager.fit_list),
+            "Min Fitness": min(manager.fit_list),
+            "Median Fitness": np.median(manager.fit_list),
+            "Average Bonus": np.mean(manager.bonus_list),
+            "Best Bonus": max(manager.bonus_list),
+            "Median Bonus": np.median(manager.bonus_list),
+            "Average Score": np.mean(manager.score_list),
+            "Best Score": max(manager.score_list),
+            "Median Score": np.median(manager.score_list),
+            "Min Score": min(manager.score_list),
             "Time Elapsed": (datetime.now() - manager.gen_start).total_seconds(),
+            "Time": datetime.now()
         })
         manager.generation += 1
     except KeyboardInterrupt:
+        ## Allows time for non-zero exit code with ctrl+c
+        sleep(5)
+        
         wandb.alert(
             title="Run Aborted",
             text=f"Run Ended at generation {manager.generation}",
