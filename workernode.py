@@ -6,6 +6,7 @@ from bson.binary import Binary
 import pickle
 from datetime import datetime, timedelta
 from neat import nn
+from GANet import GANet
 from random import randint
 
 eval_length = 30
@@ -37,7 +38,7 @@ while True:
             genome = collection.find_one({'started_eval': False})
             collection.update_one({'_id': genome['_id']}, {
                                 '$set': {'started_eval': True, 'started_at': datetime.now()}})
-            net: nn.FeedForwardNetwork = pickle.loads(genome['genome'])
+            net = pickle.loads(genome['genome'])
             generation = genome['generation']
             individual_num = genome['individual_num']
             sb.nn = net
