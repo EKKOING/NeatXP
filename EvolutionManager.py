@@ -1,18 +1,72 @@
-from shellbot import ShellBot
 import json
+import os
 import pickle
 import pprint as pp
-from os import walk, mkdir
+import sys
+from datetime import datetime, timedelta
+from math import ceil, floor
+from os import mkdir, walk
 from time import sleep, time
 
 import numpy as np
+import pymongo
+from bson.binary import Binary
+
+import wandb
+from GANet import GANet
+
+wandb.init(project="NeatXP", entity="ekkoing", resume=False)
+wandb.config = {
+    "pop": 100,
+    "duration": 60,
+}
+
+# Output Utils
+CURSOR_UP_ONE = '\x1b[1A'
+ERASE_LINE = '\x1b[2K'
+
+
+def delete_last_lines(n: int = 1) -> None:
+    for _ in range(n):
+        sys.stdout.write(CURSOR_UP_ONE)
+        sys.stdout.write(ERASE_LINE)
+
+
+def progress_bar(progress: float, in_progress: float, total: float) -> None:
+    left = '['
+    right = ']'
+    bar_length = 30
+    fill = '|'
+    in_progress_fill = '>'
+    percent = progress / total
+    in_percent = in_progress / total
+    fill_amt = int(round(percent * bar_length))
+    fill_str = ''
+    for _ in range(fill_amt):
+        fill_str += fill
+    in_fill_amt = int(round(in_percent * bar_length))
+    for _ in range(in_fill_amt):
+        fill_str += in_progress_fill
+    for _ in range(bar_length - (fill_amt + in_fill_amt)):
+        fill_str += ' '
+    print(f'{left}{fill_str}{right} {percent:.2%}')
+
+
+try:
+    with open('creds.json') as f:
+        creds = json.load(f)
+except FileNotFoundError:
+    print('creds.json not found!')
+    exit()
+
+db_string = creds['mongodb']
+client = pymongo.MongoClient(db_string)
+db = client.NEAT
 
 ## Script Settings
-pop_size = 9
-mutation_chance = 0.04
-starting_file = 'fully_trained.pickle'
-exp_dir = './ga7'
-game_length = 30
+pop_size = 99
+mutation_chance = 0.05
+exp_dir = './ga'
 ##
 
 generation = 1
@@ -79,10 +133,10 @@ def network_to_genome(network: dict):
     return genome
 
 def genome_to_network(genome: np.ndarray):
-    weights_flat = genome[:-5]
-    biases_flat = genome[-5:]
-    weights = weights_flat.reshape(15, 5)
-    biases = biases_flat.reshape(1, 5)
+    weights_flat = genome[:-8]
+    biases_flat = genome[-8:]
+    weights = weights_flat.reshape(22, 8)
+    biases = biases_flat.reshape(1, 8)
     network = {'weights': weights, 'biases': biases}
     return network
 
@@ -93,6 +147,11 @@ def pad_generation(gen_num: int) -> str:
         return '0' + str(gen_num)
     return str(gen_num)
 
+def pad_individual(ind_num: int) -> str:
+    if ind_num < 10:
+        return '0' + str(ind_num)
+    return str(ind_num)
+
 def get_variance_multiplier() -> float:
     return 1.0 / (1 + (generation / 500.0))
 
@@ -101,39 +160,136 @@ def mutate(individual: np.ndarray, mutation_chance: float = 0.05, variance: floa
     for idx, num in enumerate(individual):
         if np.random.random() < mutation_chance:
             individual[idx] = (np.random.randn() * variance) + num
-        individual[idx] = min(max(individual[idx], -50), 50)
+        individual[idx] = min(max(individual[idx], -30), 30)
     return individual
 
 def crossover(individual1: np.ndarray, individual2: np.ndarray):
     crossover_point = np.random.randint(0, len(individual1))
     return np.concatenate((individual1[:crossover_point], individual2[crossover_point:])), np.concatenate((individual2[:crossover_point], individual1[crossover_point:]))
 
-def evaluate_individual(individual: np.ndarray, name: str) -> float:
-    network = genome_to_network(individual)
-    with open(exp_dir + '/' + name, 'w+b') as f:
-        pickle.dump(network, f)
-    bot.reset()
-    bot.load_pickle(exp_dir + '/' + name)
-    while bot.reset_now == True and not bot.isAlive:
-        sleep(0.05)
-    sleep(game_length)
-    return bot.get_score()
-    ##return (np.max(individual) - np.min(individual))
-
 def evaluate_population(population: list):
-    scores = []
+    num_workers = 0
+    gen_start = datetime.now()
+    collection = db.genomes
+
     for idx, individual in enumerate(population):
-        #if idx == 0 and generation != 1:
-            #print('Skipping King!')
-            #scores.append(king_score)
-            #continue
-        print(f'Evaluating Individual {idx}')
-        score = evaluate_individual(individual, f'{pad_generation(generation)}_{idx}.pickle')
-        print(f'Score: {round(score, 1)}')
-        scores.append(score)
-    avg = np.average(scores)
-    scores_range = np.max(scores) - np.min(scores)
-    return scores, avg, scores_range
+        net = genome_to_network(individual)
+        with open(exp_dir + '/' + f'{pad_generation(generation)}-{pad_individual(idx)}.xpainet', 'w+b') as f:
+            pickle.dump(net, f)
+        net = GANet(net['weights'], net['biases'])
+        net = Binary(pickle.dumps(net))
+        db_entry = {
+            'genome': net,
+            'individual_num': idx,
+            'generation': generation,
+            'algo': 'ga',
+            'fitness': 0,
+            'bonus': 0,
+            'started_eval': False,
+            'started_at': None,
+            'finished_eval': False,
+        }
+        if collection.find_one({'generation': generation, 'individual_num': idx, 'algo': 'ga'}):
+            collection.update_one(
+                {
+                    'generation': generation,
+                    'individual_num': idx,
+                    'algo': 'ga'
+                }, {
+                    '$set': {
+                        'started_eval': False, 'finished_eval': False, 'fitness': 0, 'bonus': 0, 'genome': net, 'started_at': None
+                    }
+                }
+            )
+        else:
+            collection.insert_one(db_entry)
+    
+    sleep(1)
+
+    first_sleep = True
+    secs_passed = 0
+    no_alert = True
+    secs_since_tg_update = 0
+    last_secs_tg = 0
+
+    while True:
+        uncompleted_training = collection.count_documents({'generation': generation,
+                                                            'finished_eval': False, 'algo': 'ga'})
+        started_training = collection.count_documents(
+            {'generation': generation, 'started_eval': True, 'finished_eval': False, 'algo': 'ga'})
+        finished_training = collection.count_documents(
+            {'generation': generation, 'finished_eval': True, 'algo': 'ga'})
+
+        if num_workers < started_training:
+            num_workers = started_training
+
+        check_eval_status(collection)
+
+        if uncompleted_training == 0:
+            break
+
+        if not first_sleep:
+            delete_last_lines(6)
+        else:
+            first_sleep = False
+        print(f'=== {datetime.now().strftime("%H:%M:%S")} ===\n{uncompleted_training} genomes still need to be evaluated\n{started_training} currently being evaluated\n{finished_training} have been evaluated')
+        progress_bar(finished_training, started_training, len(population))
+        secs_tg = (ceil(uncompleted_training * 60 / (num_workers + 1)))
+        if secs_tg != last_secs_tg:
+            secs_since_tg_update = 0
+        last_secs_tg = secs_tg
+        secs_tg -= secs_since_tg_update
+        secs_since_tg_update += 1
+        mins_tg = floor(secs_tg / 60)
+        secs_tg = round(secs_tg % 60)
+        if secs_tg < 10:
+            secs_tg = f'0{secs_tg}'
+        secs_passed_str = round(secs_passed % 60)
+        if secs_passed_str < 10:
+            secs_passed_str = f'0{secs_passed_str}'
+        print(f'{floor(secs_passed / 60)}:{secs_passed_str} Elapsed - ETA {mins_tg}:{secs_tg} Remaining')
+        sleep(1)
+        secs_passed += 1
+        if num_workers == 0 and secs_passed % 60 == 0 and no_alert:
+            wandb.alert(
+                title="No Worker Nodes Available",
+                text="No workers currently running.",
+            )
+            no_alert = False
+            
+    fit_list = []
+    bonus_list = []
+    score_list = []
+    for idx, individual in enumerate(population):
+        results = collection.find_one({'individual_num': idx, 'generation': generation, 'algo': 'ga'})
+        fit_list.append(results['fitness'] + results['bonus'])
+        bonus_list.append(results['bonus'])
+        score_list.append(results['fitness'])
+
+    avg = np.average(fit_list)
+    scores_range = np.max(fit_list) - np.min(fit_list)
+    wandb.log({
+        "Generation": generation,
+        "Average Fitness": np.mean(fit_list),
+        "Best Fitness": max(fit_list),
+        "Num Workers": num_workers,
+        "Fitness SD": np.std(fit_list),
+        "Min Fitness": min(fit_list),
+        "Median Fitness": np.median(fit_list),
+        "Average Bonus": np.mean(bonus_list),
+        "Bonus SD": np.std(bonus_list),
+        "Best Bonus": max(bonus_list),
+        "Median Bonus": np.median(bonus_list),
+        "Min Bonus": min(bonus_list),
+        "Average Score": np.mean(score_list),
+        "Score SD": np.std(score_list),
+        "Best Score": max(score_list),
+        "Median Score": np.median(score_list),
+        "Min Score": min(score_list),
+        "Time Elapsed": (datetime.now() - gen_start).total_seconds(),
+        "Time": datetime.now()
+    })
+    return fit_list, avg, scores_range
 
 def crossover_population(population: list, scores: list) -> list:
     new_population = []
@@ -143,7 +299,7 @@ def crossover_population(population: list, scores: list) -> list:
         running_total = 0.0
         parent1 = 0
         for idx, individual in enumerate(population):
-            if rand_one < scores[idx] / total_scores + running_total:
+            if rand_one < (scores[idx] / total_scores) + running_total:
                 parent1 = idx
                 break
             running_total += scores[idx] / total_scores
@@ -165,6 +321,29 @@ def mutate_population(population: list) -> list:
         population[idx] = mutate(individual, mutation_chance, variance_mod)
     return population
 
+def check_eval_status(collection):
+    for genome in collection.find({'generation': generation, 'algo': 'ga',  'started_eval': True, 'finished_eval': False}):
+        genome_id = genome['_id']
+        individual_num = genome['individual_num']
+        started_at = genome['started_at']
+        if (datetime.now() - started_at) > timedelta(minutes=5):
+            delete_last_lines(5)
+            print(
+                f'Genome {generation}-{individual_num} has been running for 5 minutes, marking for review!\n\n\n\n\n\n\n')
+            collection.update_one({'_id': genome_id}, {
+                                    '$set': {'started_eval': False, 'finished_eval': False}})
+            wandb.alert(
+                title="Evaluation Timeout",
+                text=f"Genome {generation}-{individual_num} has been running for 5 minutes, marking for review",
+            )
+    for genome in collection.find({'generation': generation, 'algo': 'ga', 'started_eval': True, 'finished_eval': True, 'fitness': 0}):
+        genome_id = genome['_id']
+        key = genome['key']
+        delete_last_lines(5)
+        print(f'Genome {key} did nothing!\n\n\n\n\n\n\n')
+        collection.update_one({'_id': genome_id}, {
+                                '$set': {'fitness': -20}})
+
 variance_mod = get_variance_multiplier()
 
 population = []
@@ -173,7 +352,7 @@ try:
     print('Loading Population from Saved Files')
     temp_pop = []
     for filename in current_saves:
-        if not filename.endswith('.pickle'):
+        if not filename.endswith('.xpainet'):
             continue
         load_gen, load_idx = filename.split('_')[0], filename.split('_')[1].split('.')[0]
         if load_gen != pad_generation(generation - 1):
@@ -202,26 +381,17 @@ except FileNotFoundError:
     load_failed = True
 
 if len(current_saves) == 0 or generation == 1 and load_failed:
-    print('Generating new population from provided base file!')
-    with open(starting_file, 'rb') as f:
-        base_genome = pickle.load(f)
-        base_genome = network_to_genome(base_genome)
-        population = generate_population_from_base(base_genome, pop_size)
+    print('Generating new population from scratch!')
+    base_genome = {
+        'weights': np.random.randn(22, 8) * 0.25,
+        'biases': np.random.randn(1, 8) * 0.25,
+    }
+    base_genome = network_to_genome(base_genome)
+    population = generate_population_from_base(base_genome, pop_size)
     print('Population generated!')
     ##pp.pprint(population[0])
-pp.pprint(genome_to_network(population[0])['biases'])
-pp.pprint(genome_to_network(mutate(population[0], 0.5, 0.01))['biases'])
-
-print('Starting Bot!')
-bot = ShellBot("GA1")
-bot.load_pickle(starting_file)
-bot.start()
-
-## Give Us Enough Time to Type Password In
-for idx in range(0, 10):
-    print(f'Grant Operator Perms in Next {10 - idx} Seconds!!!')
-    sleep(1)
-
+##pp.pprint(genome_to_network(population[0])['biases'])
+##pp.pprint(genome_to_network(mutate(population[0], 0.5, 0.01))['biases'])
 
 for gen_num in range(generation, 999):
     generation = gen_num
