@@ -13,7 +13,7 @@ class GANet(object):
     def activate(self, inputs: List[float]) -> List[float]:
         nparray = np.array(inputs)
         resultants = self.forward_propogation(nparray, self.weights, self.biases).clip(min=0, max=1)
-        return resultants.tolist()
+        return resultants.flatten().tolist()
     
     def sigmoid_activation(self, x: np.ndarray) -> np.ndarray:
         return (1/(1+np.exp(-x)))
