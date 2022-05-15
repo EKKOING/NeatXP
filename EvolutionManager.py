@@ -338,9 +338,9 @@ def check_eval_status(collection):
             )
     for genome in collection.find({'generation': generation, 'algo': 'ga', 'started_eval': True, 'finished_eval': True, 'fitness': 0}):
         genome_id = genome['_id']
-        key = genome['key']
+        individual_num = genome['individual_num']
         delete_last_lines(5)
-        print(f'Genome {key} did nothing!\n\n\n\n\n\n\n')
+        print(f'Genome {generation}-{individual_num}  did nothing!\n\n\n\n\n\n\n')
         collection.update_one({'_id': genome_id}, {
                                 '$set': {'fitness': -20}})
 
