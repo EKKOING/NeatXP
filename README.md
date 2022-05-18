@@ -22,7 +22,35 @@ TBC...
 TBC...
 
 ## Experimental Design
-TBD
+For this study the GA and NEAT will be tasked with solving the same task, controlling the Shellbot XPilot Agent in a 1 on 1 battle against a hand coded opponent written by me. Both algorithms will share the same inputs, actions, and fitness functions to try and keep the environments as similar as possible. Additionally, both algorithms will have the same population size and limits on the weights of each node. 
+
+The inputs provided to the respective networks are as follows:
+
+| **Input** | **Description** |
+|:---------:|:---------------:|
+| Speed | The speed of the agent |
+| Track Wall | The distance to the tracking angle wall |
+| Closest Wall | The distance to the closest wall |
+| Front Wall | The distance to the front wall |
+| Left Wall | The distance to the left wall |
+| Right Wall | The distance to the right wall |
+| Wall 30 R | The distance to the wall 30 degrees right of the agent |
+| Wall 30 L | The distance to the wall 30 degrees left of the agent |
+| Enemy Distance | The distance to the enemy |
+| Enemy Speed | The speed of the enemy |
+| Enemy Presence | Whether or not the enemy is present on screen (1 if present, 0 if not) |
+| Delta Angle to Enemy | The angle between the current heading of the agent and the enemy |
+| Enemy CPA dist | The distance at the closest point of approach between the agent and the enemy |
+| Can Shoot | 1 if the agent has a valid aim direction to the enemy, 0 if not |
+| Delta Angle to Shoot | The angle between the current heading of the agent and the aim direction to the enemy |
+| Shot Present | 1 if there is a shot on screen, 0 if not |
+| Shot Distance | The distance to the shot |
+| Angle to the Shot | The angle between the current heading of the agent and the shot |
+| Shot Alert | Uses the XPilot AI shot alert value |
+| TT Track | Frames until collision with the tracking angle wall |
+| TT Retro | Frames until it is too late to retrograde |
+| Last Action | The last action taken by the agent |
+
 
 ## Results
 TBD
