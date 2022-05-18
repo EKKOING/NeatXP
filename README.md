@@ -26,31 +26,43 @@ For this study the GA and NEAT will be tasked with solving the same task, contro
 
 The inputs provided to the respective networks are as follows:
 
-| **Input** | **Description** |
-|:---------:|:---------------:|
-| Speed | The speed of the agent |
-| Track Wall | The distance to the tracking angle wall |
-| Closest Wall | The distance to the closest wall |
-| Front Wall | The distance to the front wall |
-| Left Wall | The distance to the left wall |
-| Right Wall | The distance to the right wall |
-| Wall 30 R | The distance to the wall 30 degrees right of the agent |
-| Wall 30 L | The distance to the wall 30 degrees left of the agent |
-| Enemy Distance | The distance to the enemy |
-| Enemy Speed | The speed of the enemy |
-| Enemy Presence | Whether or not the enemy is present on screen (1 if present, 0 if not) |
-| Delta Angle to Enemy | The angle between the current heading of the agent and the enemy |
-| Enemy CPA dist | The distance at the closest point of approach between the agent and the enemy |
-| Can Shoot | 1 if the agent has a valid aim direction to the enemy, 0 if not |
+| **Input**            | **Description**                                                                       |
+|:--------------------:|:-------------------------------------------------------------------------------------:|
+| Speed                | The speed of the agent                                                                |
+| Track Wall           | The distance to the tracking angle wall                                               |
+| Closest Wall         | The distance to the closest wall                                                      |
+| Front Wall           | The distance to the front wall                                                        |
+| Left Wall            | The distance to the left wall                                                         |
+| Right Wall           | The distance to the right wall                                                        |
+| Wall 30 R            | The distance to the wall 30 degrees right of the agent                                |
+| Wall 30 L            | The distance to the wall 30 degrees left of the agent                                 |
+| Enemy Distance       | The distance to the enemy                                                             |
+| Enemy Speed          | The speed of the enemy                                                                |
+| Enemy Presence       | Whether or not the enemy is present on screen (1 if present, 0 if not)                |
+| Delta Angle to Enemy | The angle between the current heading of the agent and the enemy                      |
+| Enemy CPA dist       | The distance at the closest point of approach between the agent and the enemy         |
+| Can Shoot            | 1 if the agent has a valid aim direction to the enemy, 0 if not                       |
 | Delta Angle to Shoot | The angle between the current heading of the agent and the aim direction to the enemy |
-| Shot Present | 1 if there is a shot on screen, 0 if not |
-| Shot Distance | The distance to the shot |
-| Angle to the Shot | The angle between the current heading of the agent and the shot |
-| Shot Alert | Uses the XPilot AI shot alert value |
-| TT Track | Frames until collision with the tracking angle wall |
-| TT Retro | Frames until it is too late to retrograde |
-| Last Action | The last action taken by the agent |
+| Shot Present         | 1 if there is a shot on screen, 0 if not                                              |
+| Shot Distance        | The distance to the shot                                                              |
+| Angle to the Shot    | The angle between the current heading of the agent and the shot                       |
+| Shot Alert           | Uses the XPilot AI shot alert value                                                   |
+| TT Track             | Frames until collision with the tracking angle wall                                   |
+| TT Retro             | Frames until it is too late to retrograde                                             |
+| Last Action          | The last action taken by the agent                                                    |
 
+The actions available to the agent are as follows:
+
+| **Action**  | **Description**                                                                          |
+|:-----------:|:----------------------------------------------------------------------------------------:|
+| Avoid Walls | Retrogrades away from the tracking angle or faces away from the nearest wall and thrusts |
+| Dodge Shot  | Attempts to dodge the shot, does nothing otherwise                                       |
+| Slow Down   | Retrogrades to slow down the agent                                                       |
+| Kill Enemy  | Attempts to kill the enemy, does nothing otherwise                                       |
+| Center      | Centers the agent on the map as far away as possible from walls                          |
+| Thrust      | Thrusts the agent forward                                                                |
+| Turn Left   | Turns the agent left 15 degrees                                                          |
+| Turn Right  | Turns the agent right 15 degrees                                                         |
 
 ## Results
 TBD
