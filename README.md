@@ -119,6 +119,9 @@ The final fitness of the agent is the sum of the two sub functions.
 ### Animated Joint Plot
 ![Joint Plot](https://github.com/EKKOING/NeatXP/blob/main/graphs/animjointplot_inf.gif?raw=true)
 
+### GA Net Visualization
+![GA Net Animation](https://github.com/EKKOING/NeatXP/blob/main/graphs/ga_net.gif?raw=true)
+
 ### Summary
 Both algorithms proved to be successful in improving performance over time. The fitness plots show that the general trend of the median and mean was upwards for the GA and NEAT, though in the case of NEAT it seemed to make the majority of its progress in the first 100 generations and then stagnate (more on this later). On the other hand, the GA showed an almost linear trend in the fitnesses of all 4 metrics from start to finish.
  - **NEAT**:
