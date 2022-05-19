@@ -1,8 +1,10 @@
 # NeatXP
-**Author:** [@EKKOING](https://github.com/EKKOING)
+**Author:** [@EKKOING](https://github.com/EKKOING)  
 **Last Update:** 20220518
 
-A look into applying the NEAT algorithm to the space combat simulator XPilot.
+Final project for [COM407](https://oak.conncoll.edu/parker/com407/projects.html) at Connecticut College as taught by [Prof. Gary Parker](https://oak.conncoll.edu/parker).
+
+A look into applying the NEAT algorithm to the space combat simulator XPilot.  
 
 ## Project Proposal
 I will attempt to compare and contrast the use of GAs and smart GAs (NEAT) to evolve an ANN to control an XPilot agent. The former will be heavily based upon the work completed for Program #4, though new training will need to take place due to the error that occurred in the training for the competition. From my earlier findings, training will likely take close to 800 generations to reach near maturity for this pure GA, thus evaluation of NEAT’s performance will be done over the same generation period. If it is determined that the project would benefit from additional training time, and/or additional trials of the same length, they will be performed. The NEAT package that will be used in this project can be found here. Metrics will be logged across each generation as well as copies of the best performing agent at each generation for later analysis.  
@@ -80,8 +82,8 @@ The actions available to the agent are as follows:
 ### The Fitness Function
 The fitness function of the agents is made up of two sub functions:
 
-The first function is the score of the agent at the end of the evaluation period.  
-The second function is assigned as follows:
+The first function (Score) is the score of the agent at the end of the evaluation period.  
+The second function (Bonus) is assigned as follows:
  - 0.01 points for each frame the agent is alive
  - 0.03 points for each frame the agent is moving faster than 0.5 units
 
@@ -95,10 +97,22 @@ The final fitness of the agent is the sum of the two sub functions.
 ### Bonus Plots
 ![Bonus Plots](https://github.com/EKKOING/NeatXP/blob/main/graphs/bonus.png?raw=true)
 
+### Animated Joint Plot
+![Joint Plot](https://github.com/EKKOING/NeatXP/blob/main/graphs/animjointplot_inf.gif?raw=true)
+
+### Summary
+Both algorithms proved to be successful in improving performance over time. The fitness plots show that the general trend of the median and mean was upwards for the GA and NEAT, though in the case of NEAT it seemed to make the majority of its progress in the first 100 generations and then stagnate (more on this later). On the other hand, the GA showed an almost linear trend in the fitnesses of all 4 metrics from start to finish.
+ - **NEAT**:
+Some of the more interesting charecteristics of the NEAT learning graphs are the almost instantaneous jump in the bonus function and inverse in the score function between generation 70 and 85. This represents the emergence of a new strategy that the algorithm quickly determines to be dominant. Unfortunately, this was the only evidence of any benefit speciation brought to NEAT as there was a misconfiguration to the config file that caused the threshold for speciation to be far too high in comparison to the learning rates hence little to no speciation occurred after the extinctions of the original species. Additionally the algorithm likely would have benefitted from a far more agressive learning rate as NEAT benefits from greater diversity far more than the GA.
+ - **GA**:
+The GA graphs are about as promising as one could ever want. Both subfunctions of the fitness function are increasing in value over time almost linearly. While the GA technically finished the 250 generations behind in score to NEAT, this could partially be attributed to a lesser starting population than its counterpart as when compared by difference from start to finish, the GA made very similar progress. When only comparing the score metric, the GA was even able to compete on par with NEAT despite this handicap. The animated jointplot shows how much more consistent the fitnesses were within generations than NEAT. 
+
+While both algorithms were able to show substantial progress from start to finish, neither was capable of beating the hand coded opponent consistently enough to have a positive score. That said it was also very clear that both algorithms would benefit from far more generations to truly test the limits of their ability to improve. This would likely prove NEAT's ability to outperform its standard GA counterpart as the network continued to evolve in complexity.
+
 ## Future Work
-TBD
+To improve upon the results of this study the most essential item would simply be more time for trials, as well as repeated trials with tweaks to hyperparameters. This would allow for NEAT's thresholds to be better adjusted to the given scenario as the GA's had been done by a previous project. It would also be interesting to see what effect the more complex map had on the development rate of the algorithms as this is likely why neither algorithm could beat the hand coded opponent. The bonus function could also use some tweaking to reward even more adventerous strategies to increase the rate of improvement.
 
 ## Credits
-[Neat-Python](https://github.com/CodeReclaimers/neat-python)  
+[Neat-Python](https://github.com/CodeReclaimers/neat-python): NEAT library used for learning.  
 
-[XPilot-AI](http://www.xpilot-ai.org/)  
+[XPilot-AI](http://www.xpilot-ai.org/): The interface for the Xpilot game for python (and many other languages).  
