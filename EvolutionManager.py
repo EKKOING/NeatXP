@@ -15,7 +15,7 @@ from bson.binary import Binary
 import wandb
 from GANet import GANet
 
-wandb.init(project="NeatXP", entity="ekkoing", resume=False)
+wandb.init(project="NeatXP", entity="ekkoing", resume=True)
 wandb.config = {
     "pop": 100,
     "duration": 60,
@@ -153,14 +153,18 @@ def pad_individual(ind_num: int) -> str:
     return str(ind_num)
 
 def get_variance_multiplier() -> float:
-    return 1.0 / (1 + (generation / 500.0))
+    return 1.0 / (1.5 + (generation / 500.0))
 
 ## Learning Functions
 def mutate(individual: np.ndarray, mutation_chance: float = 0.05, variance: float = 1):
     for idx, num in enumerate(individual):
         if np.random.random() < mutation_chance:
-            individual[idx] = (np.random.randn() * variance) + num
-        individual[idx] = min(max(individual[idx], -30), 30)
+            ## Either perform an additive or multiplicative mutation
+            if np.random.random() < 0.5:
+                individual[idx] = (np.random.randn() * variance) + num
+            else:
+                individual[idx] = (num * (np.random.randn() * variance)) + num
+        individual[idx] = min(max(individual[idx], -30), 30) ## Clamp and Decay
     return individual
 
 def crossover(individual1: np.ndarray, individual2: np.ndarray):
@@ -293,6 +297,8 @@ def evaluate_population(population: list):
 
 def crossover_population(population: list, scores: list) -> list:
     new_population = []
+    if min(scores) < 0:
+        scores = [score + abs(min(scores)) for score in scores]
     total_scores = np.sum(scores)
     while len(new_population) < pop_size - 1:
         rand_one = np.random.rand()
@@ -354,7 +360,7 @@ try:
     for filename in current_saves:
         if not filename.endswith('.xpainet'):
             continue
-        load_gen, load_idx = filename.split('_')[0], filename.split('_')[1].split('.')[0]
+        load_gen, load_idx = filename.split('-')[0], filename.split('-')[1].split('.')[0]
         if load_gen != pad_generation(generation - 1):
             continue
         print(f'Loading {filename}!')
@@ -394,33 +400,35 @@ if len(current_saves) == 0 or generation == 1 and load_failed:
 ##pp.pprint(genome_to_network(mutate(population[0], 0.5, 0.01))['biases'])
 
 for gen_num in range(generation, 999):
-    generation = gen_num
-    save_log()
-    print(f'Starting Evaluation of Generation: {generation}')
-    scores, avg, range = evaluate_population(population)
-    print(f'Evaluation Complete!')
-    average_scores.append(avg)
-    score_ranges.append(range)
-    print(f'Average Score: {round(avg, 2)}')
-    print(f'Score Range: {round(range, 2)}')
-    scores[0] = scores[0] * 1.05
-    gen_max = np.max(scores)
-    gen_maxes.append(gen_max)
-    print(f'Gen Max: {round(gen_max, 2)}')
-    king = population[np.argmax(scores)]
-    if king_score < gen_max:
-        king_score = gen_max
-        king_streak = 0
-    else:
-        king_streak += 1
-    king_scores.append(king_score)
-    print(f'King Score: {round(king_score, 2)}')
-    print(f'King Streak: {king_streak}')
-    population = crossover_population(population, scores)
-    variance_mod = get_variance_multiplier()
-    population = mutate_population(population)
-    population.insert(0, king)
-    print(f'=========================')
-
-
-
+    try:
+        generation = gen_num
+        save_log()
+        print(f'Starting Evaluation of Generation: {generation}')
+        scores, avg, pop_range = evaluate_population(population)
+        print(f'Evaluation Complete!')
+        average_scores.append(avg)
+        score_ranges.append(pop_range)
+        print(f'Average Score: {round(avg, 2)}')
+        print(f'Score Range: {round(pop_range, 2)}')
+        scores[0] = scores[0] * 1.05
+        gen_max = np.max(scores)
+        gen_maxes.append(gen_max)
+        print(f'Gen Max: {round(gen_max, 2)}')
+        king = population[np.argmax(scores)]
+        if king_score < gen_max:
+            king_score = gen_max
+            king_streak = 0
+        else:
+            king_streak += 1
+        king_scores.append(king_score)
+        print(f'King Score: {round(king_score, 2)}')
+        print(f'King Streak: {king_streak}')
+        population = crossover_population(population, scores)
+        variance_mod = get_variance_multiplier()
+        population = mutate_population(population)
+        population.insert(0, king)
+        print(f'=========================')
+    except KeyboardInterrupt:
+        print('Keyboard Interrupt!')
+        sleep(10)
+        break
