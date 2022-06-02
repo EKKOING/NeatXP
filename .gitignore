@@ -12,4 +12,3 @@ archives/
 .vscode/
 creds.json
 wandb/
-NEAT-*
