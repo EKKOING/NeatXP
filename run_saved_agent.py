@@ -49,7 +49,7 @@ sb.start()
 print('==== RUN START ====')
 while True:
     try:
-        for genome in collection.find({'generation': generation, 'algorithm': algorithm, 'genome': {'$ne': None}}).sort('fitness', pymongo.DESCENDING):
+        for genome in collection.find({'generation': generation, 'algo': algorithm, 'genome': {'$ne': None}}).sort('fitness', pymongo.DESCENDING):
             print(f'Using {algorithm} {genome["generation"]}-{genome["individual_num"]}!')
             sb.net = pickle.loads(genome['genome'])
             sleep(60)
